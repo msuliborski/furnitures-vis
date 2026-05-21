@@ -33,13 +33,16 @@ const dx1 = (f) => Math.round(IW1*f);
 const REGAL = {
   id:1, name:"Regał na książki", outerW:2200, outerH:2545, depthTop:350, depthBot:600, depth:600, legH:100,
   material:"Lite drewno — dąb / iglaste fornirowane dębem", back:"Brak",
+  // rows: GÓRA → DÓŁ. Suma clearH + 7×T = 2495 = outerH-2T (zachowaj przy zmianach!)
   rows:[
-    {clearH:200,dividers:[dx1(1/3),dx1(5/6)]},{clearH:200,dividers:[dx1(1/6),dx1(2/3)]},
-    {clearH:300,dividers:[dx1(1/3),dx1(5/6)]},{clearH:300,dividers:[dx1(1/6),dx1(2/3)]},
-    {clearH:350,dividers:[dx1(1/3),dx1(5/6)]},
-    {clearH:350,dividers:[dx1(1/2),dx1(5/6)],partialShelfAbove:true},
-    {clearH:310,dividers:[dx1(1/3),dx1(2/3)],isCabinet:true},
-    {clearH:310,dividers:[dx1(1/3),dx1(2/3)],isCabinet:true},
+    {clearH:200,dividers:[dx1(1/3),dx1(5/6)]},            // rząd 0 — 200mm (góra)
+    {clearH:200,dividers:[dx1(1/6),dx1(2/3)]},            // rząd 1 — 200mm
+    {clearH:300,dividers:[dx1(1/3),dx1(5/6)]},            // rząd 2 — 300mm
+    {clearH:300,dividers:[dx1(1/6),dx1(2/3)]},            // rząd 3 — 300mm
+    {clearH:350,dividers:[dx1(1/3),dx1(5/6)]},            // rząd 4 — 350mm
+    {clearH:350,dividers:[dx1(1/2),dx1(5/6)],partialShelfAbove:true}, // rząd 5 — 350mm, niepełna półka nad (do 5/6)
+    {clearH:310,dividers:[dx1(1/3),dx1(2/3)],isCabinet:true}, // rząd 6 — 310mm SZAFKA (górna część za drzwiami)
+    {clearH:310,dividers:[dx1(1/3),dx1(2/3)],isCabinet:true}, // rząd 7 — 310mm SZAFKA (dolna część za drzwiami)
   ],
   partialShelfEnd:dx1(5/6), cabShelfFrac:2/3,
   doors:[
@@ -458,8 +461,8 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
   const yFloor=bodyBot-t;
 
   const y700=fy(750), y1000=fy(1000), y1220=fy(1220);
-  const GEB_TOP_MM=1220; // góra obudowy Geberitu
-  const TOP_DOOR_BOTTOM_MM=GEB_TOP_MM+10; // dolna krawędź górnych drzwi: 1 cm nad Geberitem
+  const GEB_TOP_MM=1220;              // góra obudowy Geberitu [mm od podłogi] — zmień tu żeby przesunąć granicę
+  const TOP_DOOR_BOTTOM_MM=GEB_TOP_MM+10; // dolna krawędź sekcji drzwiowej (10mm nad górą Geberitu)
   const yTopDoorBot=fy(TOP_DOOR_BOTTOM_MM);
   const yWallEnd=yTopDoorBot; // prawa ścianka (półki) kończy się razem z drzwiami
   const SIDE_ACCESS_EXTRA=25*S; // make "dostęp z boku" panel wider by 25mm
@@ -476,9 +479,9 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
   const doorL=gebR+30*S, doorR=shiftedR, doorW=doorR-doorL;
   const wallAboveGebR=doorL; // ścianka nad Geberitem rozciąga się do drzwi
 
-  // 4 shelves in upper door section (nad linią dolnych górnych drzwi)
-  const topClear=H3-2*T-TOP_DOOR_BOTTOM_MM;
-  const shGap=topClear/5;
+  // 4 półki w sekcji drzwiowej: topClear/5 = odstęp. Zmień /5 na inną liczbę lub wpisz fy() ręcznie
+  const topClear=H3-2*T-TOP_DOOR_BOTTOM_MM; // = 1200mm (2480-50-1230)
+  const shGap=topClear/5; // = 240mm, półki co shGap: fy(1470), fy(1710), fy(1950), fy(2190)
   const topShelfYs=[1,2,3,4].map(i=>fy(TOP_DOOR_BOTTOM_MM+shGap*i));
 
   // Floating shelves on RIGHT — aligned with interior shelves
@@ -753,12 +756,14 @@ const ButyFront = ({doorsOpen=false, onToggle}={}) => {
   const fy=(mm)=>bodyBot - mm*S;
   // Key levels
   const yBlatTop=fy(BLAT_H), yBlatBot=yBlatTop+BLAT_T;
-  // Upper section: blat..2000 → 2 open shelves every 200, then door compartment 1600..2000 with 1 interior shelf
-  const yUp1=fy(1400), yUp2=fy(1600), yUpDoorShelf=fy(1800);
-  // Upper column starts at x=ox+ofs (glued right)
+  // Górna kolumna (1200–2000mm): 2 otwarte półki + drzwi z 1 półką w środku
+  const yUp1=fy(1400);           // otwarta półka nr 1 (1400mm od podłogi)
+  const yUp2=fy(1600);           // otwarta półka nr 2 (1600mm) — też dolna krawędź drzwi górnych
+  const yUpDoorShelf=fy(1800);   // półka wewnątrz drzwi górnych (1800mm)
+  // Upper column starts at x=ox+ofs (cofnięta o 150mm od lewej, aż do prawej krawędzi)
   const upL=ox+ofs, upR=ox+sw;
-  // Lower: door split in middle, 3 shelves at 300/600/900
-  const yLow1=fy(300), yLow2=fy(600), yLow3=fy(900);
+  // Dolna szafka (0–1200mm): 3 półki + drzwi dwuskrzydłowe
+  const yLow1=fy(300), yLow2=fy(600), yLow3=fy(900); // półki wewnętrzne (widoczne gdy drzwi otwarte)
   const midX=ox+sw/2;
   // Door insets
   const dm=6*S; // door gap
