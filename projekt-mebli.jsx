@@ -156,10 +156,10 @@ const Dim = ({x1,y1,x2,y2,label,offset=0,side="right",color="#c8a050",fontSize=1
     <text x={(x1+x2)/2} y={y1+oy+(side==="bottom"?13:-5)} fill={color} fontSize={fontSize} fontFamily="'DM Mono',monospace" textAnchor="middle">{label}</text>
   </g>);
 };
-const MatRow = ({label,value}) => (
+const MatRow = ({label,value,color="#d0cabb"}) => (
   <div style={{display:"flex",gap:10,alignItems:"baseline",marginBottom:5}}>
     <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"#6a6a5e",textTransform:"uppercase",letterSpacing:1,minWidth:100}}>{label}</span>
-    <span style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:"#d0cabb"}}>{value}</span>
+    <span style={{fontSize:13,fontFamily:"'DM Mono',monospace",color}}>{value}</span>
   </div>
 );
 
@@ -949,7 +949,7 @@ const WnekaView = () => {
     { idx:5, label:"Wnęka górna — plecy",         type:"rect", w:110,   h:1200           },
   ];
 
-  const ox=60, oy=52, rowH=120, lOff=14;
+  const ox=60, oy=52, rowH=115, lOff=40;
   const dR=22, dL=20, dB=20, ra=4;
   const vW = ox + 1200*S + dR + 80;  // widest = plecy 480px
   const vH = oy + shapes.length * rowH + 50;
@@ -962,7 +962,8 @@ const WnekaView = () => {
         const rowY = oy + i * rowH;
         if (sh.type === "trap") {
           const bPx=sh.base*S, bkPx=sh.bok*S, dPx=(sh.base-sh.top)*S;
-          const pts=`0,${dPx} ${bkPx},0 ${bkPx},${bPx} 0,${bPx}`;
+          // widok z góry: płaska krawędź (bok) na górze, skos na dole
+          const pts=`0,0 ${bkPx},0 ${bkPx},${bPx} 0,${bPx-dPx}`;
           return (
             <g key={sh.idx} transform={`translate(${ox},${rowY})`}>
               <text x={0} y={0} fill="#d0cabb" fontSize={7} fontFamily="'DM Mono',monospace">
@@ -970,13 +971,12 @@ const WnekaView = () => {
               </text>
               <g transform={`translate(0,${lOff})`}>
                 <polygon points={pts} fill="#3a3830" stroke="#9a9080" strokeWidth={0.7}/>
-                {/* right-angle marker BR */}
-                <path d={`M ${bkPx-ra},${bPx} L ${bkPx-ra},${bPx-ra} L ${bkPx},${bPx-ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
-                {/* right-angle marker BL */}
-                <path d={`M ${ra},${bPx} L ${ra},${bPx-ra} L 0,${bPx-ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
-                <Dim x1={0} y1={bPx} x2={bkPx} y2={bPx} label={`${sh.bok}`} offset={dB} side="bottom" fontSize={7}/>
+                {/* right-angle markers at top corners */}
+                <path d={`M ${ra},0 L ${ra},${ra} L 0,${ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
+                <path d={`M ${bkPx-ra},0 L ${bkPx-ra},${ra} L ${bkPx},${ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
+                <Dim x1={0} y1={0} x2={bkPx} y2={0} label={`${sh.bok}`} offset={dB} side="top" fontSize={7}/>
                 <Dim x1={bkPx} y1={0} x2={bkPx} y2={bPx} label={`${sh.base}`} offset={dR} side="right" fontSize={7}/>
-                <Dim x1={0} y1={dPx} x2={0} y2={bPx} label={`${sh.top}`} offset={dL} side="left" fontSize={7}/>
+                <Dim x1={0} y1={0} x2={0} y2={bPx-dPx} label={`${sh.top}`} offset={dL} side="left" fontSize={7}/>
               </g>
             </g>
           );
@@ -1071,14 +1071,49 @@ export default function App() {
   const cabinets=[REGAL,SZAFA,LAZIENKA,BUTY,WNEKA];
   const cab=cabinets[tab];
   return(
-    <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:T_.bg,color:T_.text,minHeight:"100vh",padding:"24px 20px",boxSizing:"border-box"}}>
+    <div className={isLight?"light-svgs":""} style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:T_.bg,color:T_.text,minHeight:"100vh",padding:"24px 20px",boxSizing:"border-box"}}>
       <style>{`
         @media print {
-          @page { size: A4; margin: 12mm; }
-          body { background: #fff !important; }
+          @page { size: A4; margin: 0; }
+          body { background: #fff !important; padding: 14mm !important; box-sizing: border-box; }
           .no-print { display: none !important; }
           .print-card { background: #fff !important; break-inside: avoid; page-break-inside: avoid; }
         }
+        /* ── Light mode SVG overrides ── */
+        .light-svgs svg [fill="#2e2c28"]  { fill: #f0ece3 }
+        .light-svgs svg [fill="#3a3830"]  { fill: #e0dbd1 }
+        .light-svgs svg [fill="#353330"]  { fill: #e4dfd5 }
+        .light-svgs svg [fill="#3d3b34"]  { fill: #d8d3c8 }
+        .light-svgs svg [fill="#4a4640"]  { fill: #cec9be }
+        .light-svgs svg [fill="#4a4238"]  { fill: #cec9be }
+        .light-svgs svg [fill="#33312c"]  { fill: #eae5dc }
+        .light-svgs svg [fill="#454540"]  { fill: #dbd6cc }
+        .light-svgs svg [fill="#5a5248"]  { fill: #b0a898 }
+        .light-svgs svg [fill="#c8b888"]  { fill: #9a7840 }
+        .light-svgs svg [fill="#aa9870"]  { fill: #8a6a30 }
+        .light-svgs svg [fill="#44403a"]  { fill: #e2ddd3 }
+        .light-svgs svg [fill="#9a9080"]  { fill: #c0bbb0 }
+        .light-svgs svg [fill="#c8a050"]  { fill: #9a7840 }
+        .light-svgs svg [fill="rgba(30,28,24,.55)"]   { fill: rgba(80,60,30,.10) }
+        .light-svgs svg [fill="rgba(30,28,24,.45)"]   { fill: rgba(80,60,30,.08) }
+        .light-svgs svg [fill="rgba(30,28,24,.35)"]   { fill: rgba(80,60,30,.07) }
+        .light-svgs svg [fill="rgba(75,70,60,.45)"]   { fill: rgba(60,40,20,.08) }
+        .light-svgs svg [fill="rgba(75,70,60,.35)"]   { fill: rgba(60,40,20,.06) }
+        .light-svgs svg [fill="rgba(75,70,60,.3)"]    { fill: rgba(60,40,20,.05) }
+        .light-svgs svg [fill="rgba(80,75,65,.35)"]   { fill: rgba(60,40,20,.06) }
+        .light-svgs svg [stroke="#9a9080"] { stroke: #4a4540 }
+        .light-svgs svg [stroke="#b0a080"] { stroke: #6a5640 }
+        .light-svgs svg [stroke="#888078"] { stroke: #5a5248 }
+        .light-svgs svg [stroke="#aa9870"] { stroke: #7a6850 }
+        .light-svgs svg [stroke="#6a6860"] { stroke: #5a5250 }
+        .light-svgs svg [stroke="#c8a050"] { stroke: #8a6820 }
+        .light-svgs svg [stroke="#7a7a70"] { stroke: #5a5040 }
+        .light-svgs svg [stroke="#8a7a60"] { stroke: #6a5040 }
+        .light-svgs svg text[fill="#c8a050"] { fill: #8a6820 }
+        .light-svgs svg text[fill="#9a9080"] { fill: #5a5248 }
+        .light-svgs svg text[fill="#6a6a5e"] { fill: #5a5248 }
+        .light-svgs svg text[fill="#d0cabb"] { fill: #4a4030 }
+        .light-svgs svg tspan[fill="#c8a050"] { fill: #8a6820 }
       `}</style>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16,marginBottom:20,flexWrap:"wrap"}}>
         <div>
@@ -1115,9 +1150,9 @@ export default function App() {
             </p>
           </div>
         </div>
-        {cab.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:"#d0cabb",margin:"0 0 16px",lineHeight:1.65}}>{cab.desc}</p></>}
+        {cab.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:T_.text,margin:"0 0 16px",lineHeight:1.65}}>{cab.desc}</p></>}
         <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Specyfikacja</div>
-        {cab.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v}/>)}
+        {cab.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v} color={T_.text}/>)}
       </div>
       )}
       <div className="no-print" style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
@@ -1145,9 +1180,9 @@ export default function App() {
               <p style={{margin:"4px 0 12px",fontSize:12,color:T_.muted,fontFamily:"'DM Mono',monospace"}}>
                 {c.dims ?? `${c.outerW}×${c.outerH}×${c.depth}mm${c.legH>0?` · nóżki ${c.legH}mm`:""}`}
               </p>
-              {c.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:"#d0cabb",margin:"0 0 16px",lineHeight:1.65}}>{c.desc}</p></>}
+              {c.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:T_.text,margin:"0 0 16px",lineHeight:1.65}}>{c.desc}</p></>}
               <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Specyfikacja</div>
-              {c.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v}/>)}
+              {c.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v} color={T_.text}/>)}
             </div>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
               {ti===0 && <><div className="print-card" style={{...card,flex:"1 1 400px",maxWidth:660}}><RegalFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 260px"}}><RegalSide/></div></>}
