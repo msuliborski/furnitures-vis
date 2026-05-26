@@ -50,7 +50,7 @@ const REGAL = {
     {fromFrac:1/3,toFrac:2/3,handleSide:"right",opensDir:"left"},
     {fromFrac:2/3,toFrac:1,handleSide:"left",opensDir:"right"},
   ],
-  specs:[["Materiał","Lite drewno — dąb / fornir"],["Grubość",`${T}mm`],["Plecy","Brak"],
+  specs:[["Materiał","Lite drewno dębowe / tańsze drewno + fornir dębowy"],["Grubość",`${T}mm`],["Plecy","Brak"],
     ["Głęb. góra","350mm"],["Głęb. dół","600mm"],["Nóżki","100mm"],
     ["Szafki","3× drzwiczki, P bez półki"],["Półki","6 otwartych + 2 za drzwiami"]],
 };
@@ -65,12 +65,12 @@ const SEG=Math.round((IW2-N_DIV*T)/5); // ~527mm
 const SZAFA = {
   id:2, name:"Szafa w korytarzu", outerW:W2, outerH:H2, depth:D2, legH:0,
   segW:SEG, innerW:IW2,
-  specs:[["Materiał","Płyta meblowa, biała / dąb"],["Grubość",`${T}mm`],["Plecy","HDF 3mm"],
+  specs:[["Materiał","Płyta meblowa biała"],["Grubość",`${T}mm`],["Plecy","HDF 3mm"],
     ["Głębokość",`${D2}mm`],["Segmenty",`5 × ~${SEG}mm`],
-    ["Seg. 1","Szuflada 60cm + przestrzeń z drzwiami (lewo)"],
-    ["Seg. 2","2× szuflada 30cm + półki + góra drzwi (lewo)"],
-    ["Seg. 3","2× szuflada + przestrzeń + drążek 190cm + góra drzwi (prawo)"],
-    ["Seg. 4+5","Połączone 40%, półki 20/40/60cm + drążek + drzwi"]],
+    ["Seg. 1","Szuflada 60cm + przestrzeń z drzwiami + przestrzeń z drzwiami (półka dzieląca) 66cm"],
+    ["Seg. 2","2× szuflada 30cm + przestrzeń z drzwiami (4 półki dzielące) + góra drzwi 66cm"],
+    ["Seg. 3","2× szuflada 30cm + przestrzeń z drzwiami (półka dzieląca i wieszak) + przestrzeń z drzwiami 66cm"],
+    ["Seg. 4+5","2× szeroka szuflada 30cm + przestrzeń z drzwiami (półka dzieląca i wieszak) + przestrzeń z drzwiami (półka dzieląca) 66cm"]],
 };
 
 // ══ CABINET 3: Szafka łazienkowa ══
@@ -105,7 +105,7 @@ const BUTY = {
   id:4, name:"Szafka na buty (przedpokój)", outerW:W4F, outerH:H4, depth:D4, frontW:W4F, backW:W4B, legH:0,
   offset: W4F-W4B, // 150mm — left side angle offset
   blatH: BLAT_H, topW: TOP_W, topD: TOP_D,
-  specs:[["Materiał","TBD"],["Grubość",`${T}mm`],
+  specs:[["Materiał","Płyta meblowa biała, czerwone akcenty"],["Grubość",`${T}mm`],
     ["Front (dół)",`${W4F}mm`],["Tył (dół)",`${W4B}mm`],["Głębokość dolna",`${D4}mm`],
     ["Wysokość",`${H4}mm`],["Blat",`na ${BLAT_H}mm`],
     ["Kolumna górna",`${TOP_W}×${TOP_D}mm (do tyłu + prawo)`],
@@ -141,20 +141,23 @@ const MatRow = ({label,value}) => (
 );
 
 // ══ SHARED ANIMATED DOOR (module-level for stable identity / working transitions) ══
-const AnimDoor = ({x,y,w,h,hx,hy,open,r=1.8}) => {
+// ov = nakładka na ścianki/półki (px); hinge transformOrigin zostaje na oryginalnej krawędzi
+const AnimDoor = ({x,y,w,h,hx,hy,open,r=1.8,ov=1}) => {
   const hingeLeft = hx > x + w/2;
   const ox2 = hingeLeft ? x : x+w;
   const tr = open ? "scaleX(0.08)" : "scaleX(1)";
   const st = {transformOrigin:`${ox2}px ${hy}px`, transform:tr, transition:"transform .6s cubic-bezier(.4,.0,.2,1)"};
-  return <g style={st}><rect x={x+1} y={y+1} width={w-2} height={h-2} fill="rgba(75,70,60,.35)" stroke="#b0a080" strokeWidth={.7} rx={1}/><circle cx={hx} cy={hy} r={r} fill="#c8b888"/></g>;
+  return <g style={st}><rect x={x-ov} y={y-ov} width={w+2*ov} height={h+2*ov} fill="rgba(75,70,60,.35)" stroke="#b0a080" strokeWidth={.7} rx={1}/><circle cx={hx} cy={hy} r={r} fill="#c8b888"/></g>;
 };
 
 // ══ SHARED ANIMATED DRAWER (subtle pull-out when open) ══
-const AnimDrw = ({x,y,w,h,open}) => {
+// ov = nakładka na ścianki/półki (px)
+const AnimDrw = ({x,y,w,h,open,maxTranslate,ov=1}) => {
   const cx = x+w/2, cy = y+h/2;
-  const tr = open ? `translate(0px, ${h*0.15}px) scale(1.06)` : "translate(0,0) scale(1)";
+  const dy = maxTranslate !== undefined ? Math.min(h*0.15, maxTranslate) : h*0.15;
+  const tr = open ? `translate(0px, ${dy}px) scale(1.06)` : "translate(0,0) scale(1)";
   const st = {transformOrigin:`${cx}px ${cy}px`, transform:tr, transition:"transform .55s cubic-bezier(.4,.0,.2,1)"};
-  return <g style={st}><rect x={x+1.5} y={y+1} width={w-3} height={h-2} fill="rgba(80,75,65,.35)" stroke="#9a9080" strokeWidth={.6} rx={1}/><circle cx={cx} cy={cy} r={1.8} fill="#c8b888"/></g>;
+  return <g style={st}><rect x={x-ov} y={y-ov} width={w+2*ov} height={h+2*ov} fill="rgba(80,75,65,.35)" stroke="#9a9080" strokeWidth={.6} rx={1}/><circle cx={cx} cy={cy} r={1.8} fill="#c8b888"/></g>;
 };
 
 // ══ REGAL VIEWS ══
@@ -169,6 +172,8 @@ const RegalFront = ({doorsOpen,onToggle}) => {
   return(<svg viewBox={`-20 -5 ${sw+160} ${oy+sh+legH+68}`} width="100%" style={{maxWidth:620}}>
     {[ox+18,ox+sw-28].map((lx,i)=><rect key={i} x={lx} y={bodyBot} width={10} height={legH} fill="#5a5248" stroke="#888078" strokeWidth={.5} rx={1}/>)}
     <rect x={ox} y={bodyTop} width={sw} height={sh} fill="#2e2c28" stroke="#9a9080" strokeWidth={1.2} rx={1}/>
+    {/* Dashed guide lines at unique divider positions, labeled above cabinet */}
+    {(()=>{const allDxs=new Set();C.rows.forEach(r=>r.dividers.forEach(dx=>allDxs.add(dx)));const fracMap=[[1/6,"1/6"],[1/3,"1/3"],[1/2,"1/2"],[2/3,"2/3"],[5/6,"5/6"]];return[...allDxs].sort((a,b)=>a-b).map((dxP,i)=>{const x=innerL+dxP*S;const frac=dxP/IW1;const label=(fracMap.find(([v])=>Math.abs(v-frac)<.02)||[])[1]||"";return(<g key={`gl${i}`}><line x1={x} y1={bodyTop+t} x2={x} y2={bodyBot-t} stroke="#c8a050" strokeWidth={.5} strokeDasharray="3,4" opacity={.3}/>{label&&<text x={x} y={bodyTop-7} fill="#c8a050" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.7}>{label}</text>}</g>);});})()}
     <rect x={ox} y={bodyTop} width={t} height={sh} fill="#3a3830" stroke="#9a9080" strokeWidth={.5}/>
     <rect x={ox+sw-t} y={bodyTop} width={t} height={sh} fill="#3a3830" stroke="#9a9080" strokeWidth={.5}/>
     <rect x={ox} y={bodyTop} width={sw} height={t} fill="#3a3830" stroke="#9a9080" strokeWidth={.5}/>
@@ -181,22 +186,18 @@ const RegalFront = ({doorsOpen,onToggle}) => {
     })}
     {rects.filter(r=>!r.isCabinet).map((r,ri)=>(<g key={`d${ri}`}>{r.dividers.map((dxP,di)=>{
       const dvx=innerL+dxP*S;let dBot2=r.bot;if(ri===4&&dxP===dx1(5/6)){const r6=rects[5];if(r6)dBot2=r6.bot;}
-      const frac=dxP/IW1;const fracMap=[[1/6,"⅙"],[1/3,"⅓"],[1/2,"½"],[2/3,"⅔"],[5/6,"⅚"]];
-      const fracLabel=(fracMap.find(([v])=>Math.abs(v-frac)<.02)||[])[1]||"";
-      return <g key={di}><rect x={dvx-t/2} y={r.top} width={t} height={dBot2-r.top} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4}/>{fracLabel&&<text x={dvx} y={r.top+8} fill="#c8a050" fontSize={5.5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.7}>{fracLabel}</text>}</g>;
+      return <rect key={di} x={dvx-t/2} y={r.top} width={t} height={dBot2-r.top} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4}/>;
     })}</g>))}
     {C.doors.map((door,di)=>{const dL=innerL+Math.round(IW1*door.fromFrac)*S,dR=innerL+Math.round(IW1*door.toFrac)*S,dW=dR-dL;
       const hx=door.handleSide==="right"?dR-12:dL+12,hy=(cabTopY+cabBotY)/2;
-      const hingeRight=door.opensDir==="left";
-      const originX=hingeRight?dR:dL;
+      const originX=door.opensDir==="left"?dL:dR;
       const tr=doorsOpen?"scaleX(0.08)":"scaleX(1)";
       const st={transformOrigin:`${originX}px ${hy}px`,transform:tr,transition:"transform .6s cubic-bezier(.4,.0,.2,1)"};
       return <g key={`dr${di}`} style={st}><rect x={dL+1.5} y={cabTopY+1.5} width={dW-3} height={cabBotY-cabTopY-3} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/><circle cx={hx} cy={hy} r={2.5} fill="#c8b888"/></g>;
     })}
     {/* Cabinet-section dividers rendered ON TOP of doors (always visible, dimmed when closed) */}
     {cabRows.map((r,ri)=>(<g key={`cd${ri}`}>{r.dividers.map((dxP,di)=>{const dvx=innerL+dxP*S;
-      const frac=dxP/IW1;const fracLabel=([[1/3,"⅓"],[2/3,"⅔"]].find(([v])=>Math.abs(v-frac)<.02)||[])[1]||"";
-      return <g key={di} style={{opacity:doorsOpen?1:.35,transition:"opacity .6s ease"}}><rect x={dvx-t/2} y={r.top} width={t} height={r.bot-r.top} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4}/>{fracLabel&&<text x={dvx} y={r.top+8} fill="#c8a050" fontSize={5.5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.7}>{fracLabel}</text>}</g>;
+      return <g key={di} style={{opacity:doorsOpen?1:.35,transition:"opacity .6s ease"}}><rect x={dvx-t/2} y={r.top} width={t} height={r.bot-r.top} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4}/></g>;
     })}</g>))}
     <rect x={innerL} y={cabTopY} width={innerR-innerL} height={cabBotY-cabTopY} fill="transparent" style={{cursor:"pointer"}} onClick={onToggle}/>
     {rects.map((r,i)=><Dim key={`rd${i}`} x1={ox+sw} y1={r.top} x2={ox+sw} y2={r.bot} label={`${r.clearH}`} offset={20} side="right" color={r.isCabinet?"#8a7a60":"#7a7a70"} fontSize={8}/>)}
@@ -301,8 +302,8 @@ const SzafaFront = ({doorsOpen,onToggle}) => {
         const yShelf60=fy(600);
         const yTopMid=fy(Math.round((2200+H2-T)/2)); // shelf halfway in top section
         return <g>
-          {/* Drawer 0-600 */}
-          <AnimDrw x={L} y={yDrwTop} w={w} h={yFloor-yDrwTop} open={doorsOpen}/>
+          {/* Drawer 0-600 — maxTranslate ogranicza wysunięcie do 300mm-drawer (h*0.15 byłoby 2x za duże) */}
+          <AnimDrw x={L} y={yDrwTop} w={w} h={yFloor-yDrwTop} open={doorsOpen} maxTranslate={300*S*0.15}/>
           {/* Shelf above drawer */}
           <Shelf x={L} y={yShelf60} w={w}/>
           {/* Door 600-2200 */}
@@ -356,20 +357,20 @@ const SzafaFront = ({doorsOpen,onToggle}) => {
       {/* ═══ SEGMENTS 4+5 (combined lower) ═══ */}
       {(()=>{
         const L=seg45L, R=seg45R, w=seg45W;
-        const yS200=fy(200), yS400=fy(400), yS600=fy(600);
+        const yD1=fy(300), yD2=fy(600); // 2 szuflady jak w seg 2 i 3
         const yRod=fy(1900), yShelf=fy(1950);
         const halfW=(w-t)/2;
         const yTopMid=fy(Math.round((2200+H2-T)/2)); // mid-top shelf
         return <g>
-          {/* Lower section: shelves + rod */}
-          <Shelf x={L} y={yS200} w={w}/>
-          <Shelf x={L} y={yS400} w={w}/>
-          <Shelf x={L} y={yS600} w={w}/>
+          {/* Lower section: 2 drawers (0-300, 300-600) + shelf at 600 */}
+          <AnimDrw x={L} y={yD1} w={w} h={yFloor-yD1} open={doorsOpen}/>
+          <AnimDrw x={L} y={yD2} w={w} h={yD1-yD2} open={doorsOpen}/>
+          <Shelf x={L} y={yD2} w={w}/>
           <Rod x={L} y={yRod} w={w}/>
           <Shelf x={L} y={yShelf} w={w}/>
-          {/* Main doors (pair) covering 0-2200 */}
-          <Door x={L} y={y2200+t} w={w/2} h={yFloor-y2200-t} hx={L+w/2-10} hy={(y2200+t+yFloor)/2} open={doorsOpen}/>
-          <Door x={L+w/2} y={y2200+t} w={w/2} h={yFloor-y2200-t} hx={L+w/2+10} hy={(y2200+t+yFloor)/2} open={doorsOpen}/>
+          {/* Main doors (pair) covering 600-2200, drawers below */}
+          <Door x={L} y={y2200+t} w={w/2} h={yD2-y2200-t} hx={L+w/2-10} hy={(y2200+t+yD2)/2} open={doorsOpen}/>
+          <Door x={L+w/2} y={y2200+t} w={w/2} h={yD2-y2200-t} hx={L+w/2+10} hy={(y2200+t+yD2)/2} open={doorsOpen}/>
           {/* Top mid-shelf in each half */}
           <Shelf x={L} y={yTopMid} w={halfW} op={doorsOpen?1:.3}/>
           <Shelf x={seg45Mid+t/2} y={yTopMid} w={halfW} op={doorsOpen?1:.3}/>
@@ -433,13 +434,13 @@ const SzafaTop = () => {
   const segXs=[]; let cx2=innerL;
   for(let i=0;i<5;i++){segXs.push(cx2);cx2+=SEG*S;if(i<3)cx2+=t;}
   const seg45L2=segXs[3], seg45Mid2=seg45L2+(innerR-seg45L2)/2;
-  return(<svg viewBox={`-10 -5 ${sw+80} ${sd+65}`} width="100%" style={{maxWidth:500}}>
+  return(<svg viewBox={`-10 -5 ${sw+80} ${sd+90}`} width="100%" style={{maxWidth:500}}>
     <rect x={ox} y={oy} width={sw} height={sd} fill="#2e2c28" stroke="#9a9080" strokeWidth={1.2} rx={1}/>
     <rect x={ox} y={oy} width={t} height={sd} fill="#3a3830" stroke="#9a9080" strokeWidth={.5}/>
     <rect x={ox+sw-t} y={oy} width={t} height={sd} fill="#3a3830" stroke="#9a9080" strokeWidth={.5}/>
     <rect x={ox} y={oy+sd-2} width={sw} height={2} fill="#454540" stroke="#9a9080" strokeWidth={.3}/>
     {[0,1,2].map(i=>{const dvx=segXs[i+1];return <rect key={i} x={dvx} y={oy} width={t} height={sd} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4}/>;})}
-    <text x={ox+sw/2} y={oy+sd-4} fill="#9a9080" fontSize={6} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.5}>tył (HDF 3mm)</text>
+    <text x={ox+sw/2} y={oy+7} fill="#9a9080" fontSize={6} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.5}>tył (HDF 3mm)</text>
     {["Seg.1","Seg.2","Seg.3"].map((l,i)=><text key={i} x={(segXs[i]+segXs[i+1])/2+t/2} y={oy+sd/2} fill="#9a9080" fontSize={7} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>{l}</text>)}
     <text x={(seg45L2+innerR)/2} y={oy+sd/2} fill="#9a9080" fontSize={7} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>Seg.4+5</text>
     <Dim x1={ox} y1={oy+sd} x2={ox+sw} y2={oy+sd} label={`${W2}`} offset={18} side="bottom"/>
@@ -467,6 +468,7 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
   const yWallEnd=yTopDoorBot; // prawa ścianka (półki) kończy się razem z drzwiami
   const SIDE_ACCESS_EXTRA=25*S; // make "dostęp z boku" panel wider by 25mm
   const sideAccessH=TOP_DOOR_BOTTOM_MM-1000; // wysokość strefy „dostęp z boku” (1000 → linia drzwi)
+  const yShelfBot=fy(1000-sideAccessH); // dół strefy prawych półek = o sideAccessH niżej niż y1000
 
   // Geberit: 170mm wide on left, 0-1220mm
   const GEB_W=170*S;
@@ -484,8 +486,8 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
   const shGap=topClear/5; // = 240mm, półki co shGap: fy(1470), fy(1710), fy(1950), fy(2190)
   const topShelfYs=[1,2,3,4].map(i=>fy(TOP_DOOR_BOTTOM_MM+shGap*i));
 
-  // Floating shelves on RIGHT — aligned with interior shelves
-  const floatShelfYs=topShelfYs;
+  // Floating shelves on RIGHT: 1st (top), 4th, 5th (at door-bottom)
+  const floatShelfYs=[fy(2190), fy(1470), fy(TOP_DOOR_BOTTOM_MM)];
 
   const Shelf=({x,y,w,op=1})=><rect x={x} y={y} width={w} height={t} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4} opacity={op}/>;
   const Door = AnimDoor;
@@ -495,7 +497,7 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
 
   return(
     <svg viewBox={`-60 -5 ${sw+420} ${oy+sh+55}`} width="100%" style={{maxWidth:720}}>
-      {/* Body background: stepped shape */}
+      {/* Body background: stepped shape — krok wcięcia przy y1000 */}
       {/* Bottom part: full width 0-1000mm */}
       <rect x={ox} y={y1000} width={sw} height={bodyBot-y1000} fill="#2e2c28" stroke="none"/>
       {/* Upper part: narrower (to shiftedR+t) */}
@@ -517,8 +519,6 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
       <Shelf x={innerL} y={y700} w={innerW}/>
       <Shelf x={innerL} y={y1000} w={innerW}/>
 
-      {/* Półka pod górną strefą drzwi / dostępem z boku */}
-      <Shelf x={innerL} y={yTopDoorBot} w={doorR-innerL}/>
 
       {/* 4 top shelves behind door */}
       {topShelfYs.map((sy,i)=><Shelf key={i} x={innerL} y={sy} w={doorR-innerL} op={doorsOpen?1:.3}/>)}
@@ -552,11 +552,14 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
       <text x={(gebR+innerR)/2} y={(y700+y1000+t)/2} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>otwarta półka</text>
 
       {/* ── 1000 → linia drzwi: ściana (dostęp z boku), obniżona jak dół górnych drzwi ── */}
-      <rect x={innerL} y={yTopDoorBot+t} width={innerR-innerL-175*S} height={y1000-yTopDoorBot-t} fill="#33312c" stroke="#9a9080" strokeWidth={.3}/>
-      <text x={(innerL+innerR)/2} y={(y1000+yTopDoorBot+t)/2} fill="#6a6a5e" fontSize={4.5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>dostęp z boku</text>
+      <rect x={innerL} y={yTopDoorBot+t} width={shiftedR-innerL} height={y1000-yTopDoorBot-t} fill="#33312c" stroke="#9a9080" strokeWidth={.3}/>
+      <text x={(innerL+innerR)/2} y={(y1000+yTopDoorBot+t)/2-3} fill="#6a6a5e" fontSize={4.5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.5}>
+        <tspan x={(innerL+innerR)/2} dy="0">przestrzeń dostępna</tspan>
+        <tspan x={(innerL+innerR)/2} dy="6">po otwarciu drzwi</tspan>
+      </text>
 
-      {/* ── od linii drzwi w górę: drzwi (wąska strefa) ── */}
-      <Door x={doorL} y={bodyTop+t} w={doorW} h={yTopDoorBot-bodyTop-t} hx={doorR-10} hy={(bodyTop+t+yTopDoorBot)/2} open={doorsOpen}/>
+      {/* ── od linii drzwi w górę: drzwi (wąska strefa) — +t/2 w dół ── */}
+      <Door x={doorL} y={bodyTop+t} w={doorW} h={yTopDoorBot-bodyTop-t/2} hx={doorR-10} hy={(bodyTop+t+yTopDoorBot+t/2)/2} open={doorsOpen}/>
 
       {/* ═══ GEBERIT (in front of cabinet left side) ═══ */}
       <rect x={ox+10*S-2} y={y1220} width={GEB_W+4} height={yFloor-y1220+t} fill="#44403a" stroke="#7a7a70" strokeWidth={1}/>
@@ -572,30 +575,26 @@ const LazienkaFront = ({doorsOpen,onToggle}) => {
         // Umywalka styka się bezpośrednio z szafą (bez szczeliny)
         const SINK_W=1400*S;
         const SINK_H=990*S;
-        const SINK_FLOAT=250*S; // 25cm "od dołu" (podniesiony dół)
-        const xSink=ox+sw; // right next to cabinet
-        const ySinkTop=bodyBot-SINK_H;
+        const SINK_FLOAT=250*S;
+        const xSink=ox+sw;
+        const ySinkTop=bodyBot-SINK_H-t;
         const sinkH=Math.max(1, SINK_H-SINK_FLOAT);
+        // Wcięcie góry: 35mm krawędź, 70mm w dół, poziomo, 70mm w górę, 35mm krawędź
+        const RIM=35*S, DROP=70*S, r=0.8;
+        const xL=xSink, xR=xSink+SINK_W;
+        const xLi=xL+RIM, xRi=xR-RIM;
+        const yTop=ySinkTop, yDrop=ySinkTop+DROP, yBot=ySinkTop+sinkH;
+        const sinkPath=`M ${xL} ${yTop} L ${xLi-r} ${yTop} A ${r} ${r} 0 0 1 ${xLi} ${yTop+r} L ${xLi} ${yDrop-r} A ${r} ${r} 0 0 0 ${xLi+r} ${yDrop} L ${xRi-r} ${yDrop} A ${r} ${r} 0 0 0 ${xRi} ${yDrop-r} L ${xRi} ${yTop+r} A ${r} ${r} 0 0 1 ${xRi+r} ${yTop} L ${xR} ${yTop} L ${xR} ${yBot} L ${xL} ${yBot} Z`;
+        const yMid=(yDrop+yBot)/2;
         return (
           <g>
-            <rect x={xSink} y={ySinkTop} width={SINK_W} height={sinkH} fill="rgba(120,120,120,.08)" stroke="#7a7a70" strokeWidth={.9} rx={3}/>
+            <path d={sinkPath} fill="rgba(120,120,120,.08)" stroke="#7a7a70" strokeWidth={.9}/>
             {Array.from({length:14}).map((_,i)=>{
-              const y1=ySinkTop+4+i*(sinkH/14);
-              return (
-                <line
-                  key={i}
-                  x1={xSink+6}
-                  y1={y1}
-                  x2={xSink+SINK_W-6}
-                  y2={y1+12}
-                  stroke="#7a7a70"
-                  strokeWidth={.45}
-                  opacity={.45}
-                />
-              );
+              const y1=yDrop+2+i*((yBot-yDrop-4)/14);
+              return <line key={i} x1={xSink+6} y1={y1} x2={xSink+SINK_W-6} y2={y1+12} stroke="#7a7a70" strokeWidth={.45} opacity={.45}/>;
             })}
-            <text x={xSink+SINK_W/2} y={ySinkTop+sinkH/2} fill="#9a9080" fontSize={6} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.75} letterSpacing={1}>UMYWALKA</text>
-            <text x={xSink+SINK_W/2} y={ySinkTop+sinkH/2+12} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.55}>1400×990 (dół +250)</text>
+            <text x={xSink+SINK_W/2} y={yMid} fill="#9a9080" fontSize={6} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.75} letterSpacing={1}>UMYWALKA</text>
+            <text x={xSink+SINK_W/2} y={yMid+12} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.55}>1400×990 (dół +250)</text>
           </g>
         );
       })()}
@@ -648,7 +647,10 @@ const LazienkaSide = () => {
       <text x={ox+sw/2} y={(y750+t+bodyBot-t)/2} fill="#6a6a5e" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>ściana</text>
 
       {/* 750-1000: dostęp z przodu */}
-      <text x={ox+sw/2} y={(y750+y1000+t)/2} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>dostęp z przodu</text>
+      <text x={ox+sw/2} y={(y750+y1000+t)/2-3} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" opacity={.5}>
+        <tspan x={ox+sw/2} dy="0">dostęp z przodu</tspan>
+        <tspan x={ox+sw/2} dy="7">po otwarciu drzwi</tspan>
+      </text>
 
       {/* 1000 → linia drzwi: otwarta półka (dostęp z boku) */}
       <text x={ox+sw/2} y={(y1000+yTopDoorBot+t)/2} fill="#9a9080" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>otwarta półka</text>
@@ -657,15 +659,10 @@ const LazienkaSide = () => {
       <rect x={innerL} y={bodyTop+t} width={innerW} height={yTopDoorBot-bodyTop-t} fill="#33312c" stroke="#9a9080" strokeWidth={.3}/>
       <text x={ox+sw/2} y={(bodyTop+t+yTopDoorBot)/2} fill="#6a6a5e" fontSize={5} fontFamily="'DM Mono',monospace" textAnchor="middle" dominantBaseline="middle" opacity={.5}>ściana</text>
 
-      {/* Floating shelves — full depth, overlapping cabinet body */}
-      {(() => {
-        const topClear=H3-2*T-(1220+10);
-        const shGap=topClear/5;
-        return [1,2,3,4].map(i => {
-          const sy=fy(1230+shGap*i);
-          return <rect key={`ss${i}`} x={innerL} y={sy} width={innerW} height={t} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4} opacity={.7}/>;
-        });
-      })()}
+      {/* Floating shelves: 1 (góra), 4 (dół), 5 (przy dnie drzwi) */}
+      {[2190, 1470, 1230].map((mm,i) => (
+        <rect key={i} x={innerL} y={fy(mm)} width={innerW} height={t} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4} opacity={.7}/>
+      ))}
 
       {/* Lampa ø150mm, środek 1830mm — 5cm od koła do prawej ścianki */}
       {(() => {
@@ -685,20 +682,16 @@ const LazienkaSide = () => {
       <Dim x1={ox} y1={y750+t} x2={ox} y2={bodyBot-t} label="750" offset={18} side="left" color="#7a7a70" fontSize={7}/>
       <Dim x1={ox} y1={y1000+t} x2={ox} y2={y750} label="250" offset={18} side="left" color="#7a7a70" fontSize={7}/>
       <Dim x1={ox} y1={yTopDoorBot+t} x2={ox} y2={y1000} label={`${sideAccessH}`} offset={18} side="left" color="#7a7a70" fontSize={7}/>
-      {/* Shelf-by-shelf dims in upper section */}
+      {/* Shelf-by-shelf dims: tylko zachowane półki (1230, 1470, 2190, top) */}
       {(() => {
-        const topClear=H3-2*T-(1220+10);
-        const shGap=topClear/5;
-        const pts=[1230];
-        for(let i=1;i<=4;i++) pts.push(1230+shGap*i);
-        pts.push(H3-T);
+        const pts=[1230, 1470, 2190, H3-T];
         return pts.slice(0,-1).map((h,i) => {
           const nextH=pts[i+1];
           return <Dim key={`sd${i}`} x1={ox+sw} y1={fy(nextH)} x2={ox+sw} y2={fy(h)} label={`${Math.round(nextH-h)}`} offset={18} side="right" color="#7a7a70" fontSize={6}/>;
         });
       })()}
       <Dim x1={ox} y1={bodyBot} x2={ox+sw} y2={bodyBot} label={`${D3}`} offset={18} side="bottom"/>
-      <text x={ox+sw/2} y={bodyTop-20} fill="#c8a050" fontSize={9} fontFamily="'DM Mono',monospace" textAnchor="middle" letterSpacing={2}>WIDOK Z BOKU (440mm)</text>
+      <text x={ox+sw/2} y={bodyTop-20} fill="#c8a050" fontSize={9} fontFamily="'DM Mono',monospace" textAnchor="middle" letterSpacing={2}>WIDOK Z BOKU</text>
     </svg>
   );
 };
@@ -765,8 +758,7 @@ const ButyFront = ({doorsOpen=false, onToggle}={}) => {
   // Dolna szafka (0–1200mm): 3 półki + drzwi dwuskrzydłowe
   const yLow1=fy(300), yLow2=fy(600), yLow3=fy(900); // półki wewnętrzne (widoczne gdy drzwi otwarte)
   const midX=ox+sw/2;
-  // Door insets
-  const dm=6*S; // door gap
+  const ov=t/2; // nakładka drzwi na ścianki (jak AnimDoor/AnimDrw)
   return(
     <svg onClick={onToggle} viewBox={`-25 -25 ${sw+110} ${oy+sh+60}`} width="100%" style={{maxWidth:360,cursor:onToggle?"pointer":"default"}}>
       {/* Upper body (narrower) */}
@@ -793,12 +785,12 @@ const ButyFront = ({doorsOpen=false, onToggle}={}) => {
       {/* Upper interior shelf (25mm) at 1800 — dim when door closed */}
       <rect x={upL+t} y={yUpDoorShelf-t/2} width={sw-ofs-2*t} height={t} fill="#3d3b34" stroke="#9a9080" strokeWidth={.4} opacity={doorsOpen?1:.3}/>
 
-      {/* Upper door (1600..2000), hinge LEFT, handle RIGHT */}
-      {(()=>{ const dX=upL+t+dm, dY=bodyTop+t+dm, dW=sw-ofs-2*t-2*dm, dH=yUp2-t/2-dY;
+      {/* Upper door (top..1600), hinge LEFT, handle RIGHT */}
+      {(()=>{ const dX=upL+t, dY=bodyTop+t, dW=sw-ofs-2*t, dH=yUp2-t/2-dY;
         const open=doorsOpen?"scaleX(0.08)":"scaleX(1)";
         return (
           <g onClick={onToggle} style={{cursor:onToggle?"pointer":"default",transformOrigin:`${dX}px ${dY+dH/2}px`,transform:open,transition:"transform .6s cubic-bezier(.4,.0,.2,1)"}}>
-            <rect x={dX} y={dY} width={dW} height={dH} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
+            <rect x={dX-ov} y={dY-ov} width={dW+2*ov} height={dH+2*ov} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
             <circle cx={dX+dW-6} cy={dY+dH/2} r={2.5} fill="#c8b888"/>
           </g>
         );
@@ -810,17 +802,17 @@ const ButyFront = ({doorsOpen=false, onToggle}={}) => {
       ))}
 
       {/* Lower doors (double), hinges on OUTSIDE edges, handles in CENTER */}
-      {(()=>{ const dY=yBlatBot+dm, dH=bodyBot-t-dY-dm, dW=(sw-2*t)/2-dm-dm/2;
-        const lX=ox+t+dm, rX=midX+dm/2;
+      {(()=>{ const dY=yBlatBot, dH=bodyBot-t-dY, dW=(sw-2*t)/2;
+        const lX=ox+t, rX=midX;
         const open=doorsOpen?"scaleX(0.08)":"scaleX(1)";
         const cy=dY+dH/2;
         return (<>
           <g onClick={onToggle} style={{cursor:onToggle?"pointer":"default",transformOrigin:`${lX}px ${cy}px`,transform:open,transition:"transform .6s cubic-bezier(.4,.0,.2,1)"}}>
-            <rect x={lX} y={dY} width={dW} height={dH} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
+            <rect x={lX-ov} y={dY-ov} width={dW+ov} height={dH+2*ov} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
             <circle cx={lX+dW-6} cy={cy} r={2.5} fill="#c8b888"/>
           </g>
           <g onClick={onToggle} style={{cursor:onToggle?"pointer":"default",transformOrigin:`${rX+dW}px ${cy}px`,transform:open,transition:"transform .6s cubic-bezier(.4,.0,.2,1)"}}>
-            <rect x={rX} y={dY} width={dW} height={dH} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
+            <rect x={rX} y={dY-ov} width={dW+ov} height={dH+2*ov} fill="rgba(75,70,60,.45)" stroke="#b0a080" strokeWidth={.8} rx={1}/>
             <circle cx={rX+6} cy={cy} r={2.5} fill="#c8b888"/>
           </g>
         </>);
