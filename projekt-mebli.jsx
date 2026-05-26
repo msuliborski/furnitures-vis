@@ -22,6 +22,7 @@ function writePatch(patch) {
 
 function validView(tab, view) {
   if (tab === 0) return view === "front" || view === "side" || view === "both";
+  if (tab === 4) return view === "all";
   return view === "front" || view === "side" || view === "top" || view === "all";
 }
 
@@ -32,6 +33,7 @@ const dx1 = (f) => Math.round(IW1*f);
 // ══ CABINET 1: Regał ══
 const REGAL = {
   id:1, name:"Regał na książki", outerW:2200, outerH:2545, depthTop:350, depthBot:600, depth:600, legH:100,
+  desc:"Regał na książki z litego drewna. Na szczycie będą rośliny, w środku głównie książki, na dolnej części za drzwiami schowek na gry planszowe i kuwetę kota.",
   material:"Lite drewno — dąb / iglaste fornirowane dębem", back:"Brak",
   // rows: GÓRA → DÓŁ. Suma clearH + 7×T = 2495 = outerH-2T (zachowaj przy zmianach!)
   rows:[
@@ -64,6 +66,7 @@ const SEG=Math.round((IW2-N_DIV*T)/5); // ~527mm
 
 const SZAFA = {
   id:2, name:"Szafa w korytarzu", outerW:W2, outerH:H2, depth:D2, legH:0,
+  desc:"Duża szafa na korytarzu schowana częściowo we wnęce. Wykonana ze standardowej deski meblowej, biała, opcjonalnie z frontami ozdobionymi szlifem. W środku duże górne półki, wieszaki na ubrania, na dole w każdym segmencie szuflady.",
   segW:SEG, innerW:IW2,
   specs:[["Materiał","Płyta meblowa biała"],["Grubość",`${T}mm`],["Plecy","HDF 3mm"],
     ["Głębokość",`${D2}mm`],["Segmenty",`5 × ~${SEG}mm`],
@@ -79,6 +82,7 @@ const IW3=W3-2*T; // 740
 const ID3=D3-2*T; // 390
 const LAZIENKA = {
   id:3, name:"Szafka łazienkowa", outerW:W3, outerH:H3, depth:D3, legH:0,
+  desc:"Szafka łazienkowa zakrywająca młynek. W wyższych partiach półki na papier toaletowy, akcesoria umywalkowe oraz chemię i mniej przydatne na co dzień rzeczy. Znajduje się w rogu łazienki w dość trudno dostępnym miejscu między geberitem a umywalką.",
   material:"Płyta MDF, fornir drewniany ciemny brąz", back:"HDF 3mm",
   // Front (790mm): 0-700 magnet doors, 700-1000 open shelf, 1000-1400 wall, 1400-2480 door+4 shelves
   // Side (440mm): 0-1000 wall, 1000-1400 open shelf, 1400-2480 wall
@@ -103,6 +107,7 @@ const BLAT_H=1200;
 const TOP_W=530, TOP_D=180;
 const BUTY = {
   id:4, name:"Szafka na buty (przedpokój)", outerW:W4F, outerH:H4, depth:D4, frontW:W4F, backW:W4B, legH:0,
+  desc:"Szafka na buty stojąca tuż przy wejściu, przy dość krzywej i nieregularnej ścianie. Ma zakryte półki na buty, blat oraz otwarte i zakryte półki w górnej kolumnie.",
   offset: W4F-W4B, // 150mm — left side angle offset
   blatH: BLAT_H, topW: TOP_W, topD: TOP_D,
   specs:[["Materiał","Płyta meblowa biała, czerwone akcenty"],["Grubość",`${T}mm`],
@@ -111,6 +116,24 @@ const BUTY = {
     ["Kolumna górna",`${TOP_W}×${TOP_D}mm (do tyłu + prawo)`],
     ["Dół","Drzwi dwuskrzydłowe (gałki w środku) + 3 półki"],
     ["Góra","2× półka otwarta (200mm) + drzwi + 1 półka"]],
+};
+
+// ══ SECTION 5: Małe półki do wnęki kuchennej ══
+const WNEKA = {
+  id:5, name:"Małe półki do wnęki kuchennej",
+  outerW:null, outerH:null, depth:18, legH:0,
+  dims:"5 elementów · grubość 18mm",
+  desc:"Półki i maskownice do wnęki kuchennej — dodają podłogę, półki lub zakrywają ścianę. Montaż utrudniony ze względu na wąską przestrzeń i nieregularne ściany, lecz możliwe umocowanie przy istniejących szafkach wiszących.",
+  specs:[
+    ["Materiał","Płyta meblowa biała, oklejona ABS (standard meblowy 18mm)"],
+    ["Grubość","18mm"],
+    ["Ilość","5 szt."],
+    ["Wnęka dolna — podłoga",      "trapez prostokątny 600×100/75mm"],
+    ["Wnęka górna — półka dół",    "trapez prostokątny 600×130/110mm"],
+    ["Wnęka górna — półka środek", "trapez prostokątny 600×130/110mm"],
+    ["Wnęka górna — półka góra",   "trapez prostokątny 600×130/110mm"],
+    ["Wnęka górna — plecy",        "prostokąt 1200×110mm"],
+  ],
 };
 
 // ══ SHARED ══
@@ -288,8 +311,8 @@ const SzafaFront = ({doorsOpen,onToggle}) => {
       {/* Full-width shelf at 2200 */}
       <Shelf x={innerL} y={y2200} w={innerR-innerL}/>
 
-      {/* 3 full-height dividers (between seg 1-2, 2-3, 3-4) */}
-      {[0,1,2].map(i=>{const dvx=segXs[i+1]; return <rect key={i} x={dvx} y={bodyTop+t} width={t} height={sh-2*t} fill="#3d3b34" stroke="#9a9080" strokeWidth={.5}/>;
+      {/* 3 full-height dividers (between seg 1-2, 2-3, 3-4); seg2-3 divider only below 2200 */}
+      {[0,1,2].map(i=>{const dvx=segXs[i+1]; const dvTop=i===1?y2200+t:bodyTop+t; return <rect key={i} x={dvx} y={dvTop} width={t} height={bodyBot-t-dvTop} fill="#3d3b34" stroke="#9a9080" strokeWidth={.5}/>;
       })}
 
       {/* Partial divider between seg4+5 (only top section: above 2200) */}
@@ -760,7 +783,7 @@ const ButyFront = ({doorsOpen=false, onToggle}={}) => {
   const midX=ox+sw/2;
   const ov=t/2; // nakładka drzwi na ścianki (jak AnimDoor/AnimDrw)
   return(
-    <svg onClick={onToggle} viewBox={`-25 -25 ${sw+110} ${oy+sh+60}`} width="100%" style={{maxWidth:360,cursor:onToggle?"pointer":"default"}}>
+    <svg onClick={onToggle} viewBox={`-25 -25 ${sw+145} ${oy+sh+60}`} width="100%" style={{maxWidth:400,cursor:onToggle?"pointer":"default"}}>
       {/* Upper body (narrower) */}
       <rect x={upL} y={bodyTop} width={sw-ofs} height={yBlatTop-bodyTop} fill="#2e2c28" stroke="#9a9080" strokeWidth={1.2}/>
       {/* Lower body (full width) */}
@@ -885,7 +908,7 @@ const ButyTop = () => {
   // Upper column rect: from x=ox+ofs (same as back-left) to x=ox+fW (right), y=oy (back) to y=oy+tD
   const upX=ox+ofs, upY=oy, upW=tW, upH=tD;
   return(
-    <svg viewBox={`-20 -30 ${fW+120} ${sd+110}`} width="100%" style={{maxWidth:400}}>
+    <svg viewBox={`-20 -30 ${fW+155} ${sd+160}`} width="100%" style={{maxWidth:440}}>
       {/* Trapezoid (lower section seen from above) */}
       <polygon points={pts} fill="#2e2c28" stroke="#9a9080" strokeWidth={1.2}/>
       {/* Upper column (glued to back + right) — drawn on top, lighter */}
@@ -910,11 +933,78 @@ const ButyTop = () => {
   );
 };
 
+// ══ WNEKA VIEW ══
+const WnekaView = () => {
+  const S = 0.4; // 1mm = 0.4px
+
+  // type "trap": right trapezoid (right angles at both bottom corners, slanted top)
+  //   horizontal layout: bok = long bottom edge, base = right side, top = left side
+  //   points: TL(0, (base-top)*S), TR(bok*S, 0), BR(bok*S, base*S)←90°, BL(0, base*S)
+  // type "rect": simple rectangle, h = long dim (horizontal), w = short dim (vertical)
+  const shapes = [
+    { idx:1, label:"Wnęka dolna — podłoga",      type:"trap", base:100, top:75,  bok:600 },
+    { idx:2, label:"Wnęka górna — półka dół",    type:"trap", base:130, top:110, bok:600 },
+    { idx:3, label:"Wnęka górna — półka środek", type:"trap", base:130, top:110, bok:600 },
+    { idx:4, label:"Wnęka górna — półka góra",   type:"trap", base:130, top:110, bok:600 },
+    { idx:5, label:"Wnęka górna — plecy",         type:"rect", w:110,   h:1200           },
+  ];
+
+  const ox=60, oy=52, rowH=120, lOff=14;
+  const dR=22, dL=20, dB=20, ra=4;
+  const vW = ox + 1200*S + dR + 80;  // widest = plecy 480px
+  const vH = oy + shapes.length * rowH + 50;
+
+  return (
+    <svg viewBox={`-30 -20 ${vW+30} ${vH}`} width="100%" style={{maxWidth:660}}>
+      <text x={ox+300*S} y={oy-30} fill="#c8a050" fontSize={9} fontFamily="'DM Mono',monospace" textAnchor="middle" letterSpacing={2}>ELEMENTY — WIDOK 2D</text>
+      <text x={ox+300*S} y={oy-18} fill="#6a6a5e" fontSize={6} fontFamily="'DM Mono',monospace" textAnchor="middle">płyta meblowa biała · 18mm · ABS</text>
+      {shapes.map((sh, i) => {
+        const rowY = oy + i * rowH;
+        if (sh.type === "trap") {
+          const bPx=sh.base*S, bkPx=sh.bok*S, dPx=(sh.base-sh.top)*S;
+          const pts=`0,${dPx} ${bkPx},0 ${bkPx},${bPx} 0,${bPx}`;
+          return (
+            <g key={sh.idx} transform={`translate(${ox},${rowY})`}>
+              <text x={0} y={0} fill="#d0cabb" fontSize={7} fontFamily="'DM Mono',monospace">
+                <tspan fill="#c8a050" fontSize={6}>{`0${sh.idx}  `}</tspan>{sh.label}
+              </text>
+              <g transform={`translate(0,${lOff})`}>
+                <polygon points={pts} fill="#3a3830" stroke="#9a9080" strokeWidth={0.7}/>
+                {/* right-angle marker BR */}
+                <path d={`M ${bkPx-ra},${bPx} L ${bkPx-ra},${bPx-ra} L ${bkPx},${bPx-ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
+                {/* right-angle marker BL */}
+                <path d={`M ${ra},${bPx} L ${ra},${bPx-ra} L 0,${bPx-ra}`} fill="none" stroke="#c8a050" strokeWidth={0.6}/>
+                <Dim x1={0} y1={bPx} x2={bkPx} y2={bPx} label={`${sh.bok}`} offset={dB} side="bottom" fontSize={7}/>
+                <Dim x1={bkPx} y1={0} x2={bkPx} y2={bPx} label={`${sh.base}`} offset={dR} side="right" fontSize={7}/>
+                <Dim x1={0} y1={dPx} x2={0} y2={bPx} label={`${sh.top}`} offset={dL} side="left" fontSize={7}/>
+              </g>
+            </g>
+          );
+        } else {
+          const hPx=sh.h*S, wPx=sh.w*S;
+          return (
+            <g key={sh.idx} transform={`translate(${ox},${rowY})`}>
+              <text x={0} y={0} fill="#d0cabb" fontSize={7} fontFamily="'DM Mono',monospace">
+                <tspan fill="#c8a050" fontSize={6}>{`0${sh.idx}  `}</tspan>{sh.label}
+              </text>
+              <g transform={`translate(0,${lOff})`}>
+                <rect x={0} y={0} width={hPx} height={wPx} fill="#3a3830" stroke="#9a9080" strokeWidth={0.7}/>
+                <Dim x1={0} y1={wPx} x2={hPx} y2={wPx} label={`${sh.h}`} offset={dB} side="bottom" fontSize={7}/>
+                <Dim x1={hPx} y1={0} x2={hPx} y2={wPx} label={`${sh.w}`} offset={dR} side="right" fontSize={7}/>
+              </g>
+            </g>
+          );
+        }
+      })}
+    </svg>
+  );
+};
+
 // ══ MAIN APP ══
 export default function App() {
   const s0 = readState();
   const tabNum = Number(s0.tab);
-  const clampedTab = Math.min(3, Math.max(0, Number.isFinite(tabNum) ? tabNum : 0));
+  const clampedTab = Math.min(4, Math.max(0, Number.isFinite(tabNum) ? tabNum : 0));
   const [tab, setTab] = useState(clampedTab);
   const [doorsOpen, setDoorsOpen] = useState(!!s0.doorsOpen);
   const [theme, setTheme] = useState(s0.theme === "light" ? "light" : "dark");
@@ -978,7 +1068,7 @@ export default function App() {
     };
   }, []);
 
-  const cabinets=[REGAL,SZAFA,LAZIENKA,BUTY];
+  const cabinets=[REGAL,SZAFA,LAZIENKA,BUTY,WNEKA];
   const cab=cabinets[tab];
   return(
     <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:T_.bg,color:T_.text,minHeight:"100vh",padding:"24px 20px",boxSizing:"border-box"}}>
@@ -1008,7 +1098,7 @@ export default function App() {
       </div>
       <div className="no-print" style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
         {cabinets.map((c,i)=>(
-          <button key={i} onClick={()=>{setDoorsOpen(false);setTab(i);setView((v)=>(validView(i,v)?v:"front"));}} style={{
+          <button key={i} onClick={()=>{setDoorsOpen(false);setTab(i);setView((v)=>(validView(i,v)?v:i===4?"all":"front"));}} style={{
             padding:"10px 18px",border:tab===i?`1.5px solid ${T_.accent}`:`1px solid ${T_.border}`,
             background:tab===i?T_.accentBg:T_.btnBg,color:tab===i?T_.accent:T_.muted,
             borderRadius:8,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:12,fontWeight:tab===i?500:400,
@@ -1021,16 +1111,17 @@ export default function App() {
           <div>
             <h2 style={{margin:0,fontSize:20,fontWeight:600}}>{cab.name}</h2>
             <p style={{margin:"4px 0",fontSize:12,color:T_.muted,fontFamily:"'DM Mono',monospace"}}>
-              {cab.outerW}×{cab.outerH}×{cab.depth}mm{cab.legH>0?` · nóżki ${cab.legH}mm`:""}
+              {cab.dims ?? `${cab.outerW}×${cab.outerH}×${cab.depth}mm${cab.legH>0?` · nóżki ${cab.legH}mm`:""}`}
             </p>
           </div>
         </div>
+        {cab.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:"#d0cabb",margin:"0 0 16px",lineHeight:1.65}}>{cab.desc}</p></>}
         <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Specyfikacja</div>
         {cab.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v}/>)}
       </div>
       )}
       <div className="no-print" style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {(tab===0?["front","side","both"]:["front","side","top","all"]).map(v=>(
+        {(tab===0?["front","side","both"]:tab===4?["all"]:["front","side","top","all"]).map(v=>(
           <button key={v} onClick={()=>setView(v)} style={{
             padding:"8px 14px",border:view===v?`1.5px solid ${T_.accent}`:`1px solid ${T_.border}`,
             background:view===v?T_.accentBg:T_.btnBg,color:view===v?T_.accent:T_.muted,
@@ -1044,7 +1135,7 @@ export default function App() {
           borderRadius:6,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:11,
         }}>{doorsOpen?"🔓 Zamknij":"🔒 Otwórz"}</button>
       </div>
-      {printAll && [0,1,2,3].map(ti => {
+      {printAll && [0,1,2,3,4].map(ti => {
         const c = cabinets[ti];
         const card = {background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20};
         return (
@@ -1052,33 +1143,36 @@ export default function App() {
             <div className="print-card" style={{...card,marginBottom:16}}>
               <h2 style={{margin:0,fontSize:20,fontWeight:600}}>{`0${c.id} · ${c.name}`}</h2>
               <p style={{margin:"4px 0 12px",fontSize:12,color:T_.muted,fontFamily:"'DM Mono',monospace"}}>
-                {c.outerW}×{c.outerH}×{c.depth}mm{c.legH>0?` · nóżki ${c.legH}mm`:""}
+                {c.dims ?? `${c.outerW}×${c.outerH}×${c.depth}mm${c.legH>0?` · nóżki ${c.legH}mm`:""}`}
               </p>
+              {c.desc&&<><div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Opis</div><p style={{fontSize:13,fontFamily:"'DM Mono',monospace",color:"#d0cabb",margin:"0 0 16px",lineHeight:1.65}}>{c.desc}</p></>}
               <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:T_.accent,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Specyfikacja</div>
               {c.specs.map(([l,v],i)=><MatRow key={i} label={l} value={v}/>)}
             </div>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              {ti===0 && <><div className="print-card" style={{...card,flex:"1 1 400px"}}><RegalFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 260px"}}><RegalSide/></div></>}
-              {ti===1 && <><div className="print-card" style={{...card,flex:"1 1 420px"}}><SzafaFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 200px"}}><SzafaSide/></div><div className="print-card" style={{...card,flex:"1 1 400px"}}><SzafaTop/></div></>}
-              {ti===2 && <><div className="print-card" style={{...card,flex:"1 1 300px"}}><LazienkaFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 200px"}}><LazienkaSide/></div><div className="print-card" style={{...card,flex:"1 1 280px"}}><LazienkaTop/></div></>}
-              {ti===3 && <><div className="print-card" style={{...card,flex:"1 1 300px"}}><ButyFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div><div className="print-card" style={{...card,flex:"0 1 160px"}}><ButySide/></div><div className="print-card" style={{...card,flex:"1 1 350px"}}><ButyTop/></div></>}
+              {ti===0 && <><div className="print-card" style={{...card,flex:"1 1 400px",maxWidth:660}}><RegalFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 260px"}}><RegalSide/></div></>}
+              {ti===1 && <><div className="print-card" style={{...card,flex:"1 1 420px",maxWidth:760}}><SzafaFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 200px"}}><SzafaSide/></div><div className="print-card" style={{...card,flex:"1 1 400px",maxWidth:540}}><SzafaTop/></div></>}
+              {ti===2 && <><div className="print-card" style={{...card,flex:"1 1 300px",maxWidth:760}}><LazienkaFront doorsOpen={false}/></div><div className="print-card" style={{...card,flex:"0 1 200px"}}><LazienkaSide/></div><div className="print-card" style={{...card,flex:"1 1 280px",maxWidth:440}}><LazienkaTop/></div></>}
+              {ti===3 && <><div className="print-card" style={{...card,flex:"1 1 300px",maxWidth:440}}><ButyFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div><div className="print-card" style={{...card,flex:"0 1 160px"}}><ButySide/></div><div className="print-card" style={{...card,flex:"1 1 350px",maxWidth:480}}><ButyTop/></div></>}
+              {ti===4 && <div className="print-card" style={{...card,flex:"1 1 400px",maxWidth:680}}><WnekaView/></div>}
             </div>
           </div>
         );
       })}
       {!printAll && (
       <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-        {tab===0&&(view==="front"||view==="both")&&<div className="print-card" style={{flex:"1 1 400px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><RegalFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
+        {tab===0&&(view==="front"||view==="both")&&<div className="print-card" style={{flex:"1 1 400px",maxWidth:660,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><RegalFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
         {tab===0&&(view==="side"||view==="both")&&<div className="print-card" style={{flex:"0 1 260px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><RegalSide/></div>}
-        {tab===1&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 420px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><SzafaFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
+        {tab===1&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 420px",maxWidth:760,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><SzafaFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
         {tab===1&&(view==="side"||view==="all")&&<div className="print-card" style={{flex:"0 1 200px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><SzafaSide/></div>}
-        {tab===1&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 400px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><SzafaTop/></div>}
-        {tab===2&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 300px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><LazienkaFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
+        {tab===1&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 400px",maxWidth:540,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><SzafaTop/></div>}
+        {tab===2&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 300px",maxWidth:760,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><LazienkaFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
         {tab===2&&(view==="side"||view==="all")&&<div className="print-card" style={{flex:"0 1 200px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><LazienkaSide/></div>}
-        {tab===2&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 280px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><LazienkaTop/></div>}
-        {tab===3&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 300px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><ButyFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
+        {tab===2&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 280px",maxWidth:440,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><LazienkaTop/></div>}
+        {tab===3&&(view==="front"||view==="all")&&<div className="print-card" style={{flex:"1 1 300px",maxWidth:440,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><ButyFront doorsOpen={doorsOpen} onToggle={()=>setDoorsOpen(!doorsOpen)}/></div>}
         {tab===3&&(view==="side"||view==="all")&&<div className="print-card" style={{flex:"0 1 160px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><ButySide/></div>}
-        {tab===3&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 350px",background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><ButyTop/></div>}
+        {tab===3&&(view==="top"||view==="all")&&<div className="print-card" style={{flex:"1 1 350px",maxWidth:480,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><ButyTop/></div>}
+        {tab===4&&view==="all"&&<div className="print-card" style={{flex:"1 1 400px",maxWidth:680,background:T_.card,border:`1px solid ${T_.border}`,borderRadius:4,padding:20}}><WnekaView/></div>}
       </div>
       )}
     </div>
